@@ -56,16 +56,11 @@ builtin_ids = ["starship"]
 starship_config = "~/.config/starship/starship.toml"
 ```
 
-Use the same path as Starship's `STARSHIP_CONFIG`. Noctalia uses this explicit path for applying and removing its palette,
-even when its daemon starts before your interactive shell. The file must be writable; this option does not make a
-Home Manager-managed file in the Nix store writable.
+Use the same writable path as Starship's `STARSHIP_CONFIG`. Apply and undo use it directly, avoiding unreliable
+shell-environment discovery after boot. Leave it empty to retain automatic discovery.
 
-When the setting is empty, Noctalia retains session discovery: its inherited `STARSHIP_CONFIG`, the systemd user
-environment, running processes, then the default `$XDG_CONFIG_HOME/starship.toml`. Shell startup exports may not be
-visible to the daemon or the process scan, so set an explicit path for reliable startup behavior.
-
-Disabling the template remembers its last explicit path even if you remove the setting at the same time. To move an
-existing integration to another file, disable the template first, then set the new path and enable it again.
+Undo remembers the last explicit path even if you remove the setting when disabling the template. To change targets,
+disable the template first, then set the new path and enable it again.
 
 ## Community Templates
 

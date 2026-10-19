@@ -308,34 +308,22 @@ When using the service, it is recommended to enable `launch_apps_as_systemd_serv
 
 ### Declarative Starship colors {#starship}
 
-Enable the Home Manager integration to apply Noctalia colors while keeping your Starship settings and presets
-declarative:
+Keep your existing Starship settings and presets, and enable:
 
 ```nix
-programs.starship = {
-  enable = true;
-  settings.add_newline = false;
-};
-programs.noctalia = {
-  enable = true;
-  starship.enable = true;
-};
+programs.starship.enable = true;
+programs.noctalia.enable = true;
+programs.noctalia.starship.enable = true;
 ```
 
-The module combines Home Manager's generated Starship configuration with Noctalia's palette in
-`$XDG_STATE_HOME/noctalia/starship.toml` and sets `STARSHIP_CONFIG` to that writable file. The Nix store source stays
-unchanged. Activation initializes the file and refreshes it on Home Manager switches; Noctalia updates the colors when
-its palette changes. Updates replace the complete file atomically.
+The module sets `STARSHIP_CONFIG` to `$XDG_STATE_HOME/noctalia/starship.toml`, combining your managed configuration
+with Noctalia colors without changing the Nix store source. Home Manager switches and palette changes update this file.
 
-This integration requires attribute-set `programs.noctalia.settings`; raw TOML strings and paths remain supported when
-it is disabled. It manages the `starship` user template, so leave the built-in Starship template disabled and do not
-define your own `theme.templates.user.starship`. The module also sets `theme.templates.starship_config` to its generated
-file. Reserve the palette name `noctalia` for generated colors.
+Use attribute-set `programs.noctalia.settings`, leave the built-in Starship template disabled, and reserve
+`theme.templates.user.starship`, `theme.templates.starship_config`, and the `noctalia` palette for the integration.
 
-Start a new login session after enabling or disabling the integration so your shells receive the updated
-`STARSHIP_CONFIG`. To disable it, set `programs.noctalia.starship.enable = false` and switch Home Manager. The original
-Home Manager Starship config becomes active in the new session. The last generated file is retained for existing
-shells; Noctalia no longer updates it.
+Start a new login session after enabling or disabling this option. To disable it, set it to `false` and switch Home
+Manager; new sessions use your original Starship config. The generated file is retained for existing shells.
 
 ### Binary Cache {#binary-cache}
 

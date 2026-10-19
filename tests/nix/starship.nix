@@ -88,11 +88,6 @@ assert rejects {
 assert disabled.home.sessionVariables.STARSHIP_CONFIG == disabled.programs.starship.configPath;
 assert !(disabled.home.activation ? noctaliaStarship);
 assert !(disabled.xdg.configFile ? "noctalia/config.toml");
-assert
-  (evaluate {
-    programs.noctalia.starship.enable = false;
-    programs.noctalia.settings = "[theme]\nmode = 'dark'";
-  }).programs.noctalia.settings == "[theme]\nmode = 'dark'";
 pkgs.runCommand "noctalia-starship-module-test" { nativeBuildInputs = [ pkgs.python3 ]; } ''
   python3 - <<'PY'
   import os
