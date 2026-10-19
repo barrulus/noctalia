@@ -463,13 +463,6 @@ namespace noctalia::theme {
     hookOptions.schemeType = request.schemeType;
     hookOptions.verbose = true;
     hookOptions.configTable = request.configTable;
-    if (std::ranges::contains(request.undoBuiltinIds, "starship")) {
-      // The serialized config always includes theme.templates. Undo targets the
-      // path used when Starship was enabled, even if its setting was removed.
-      auto undoConfig = std::make_shared<toml::table>(*request.configTable);
-      (*undoConfig)["theme"]["templates"].as_table()->insert_or_assign("starship_config", request.undoStarshipConfig);
-      hookOptions.configTable = std::move(undoConfig);
-    }
     hookOptions.configDir = configPath.parent_path().string();
     hookOptions.configFile = configPath.string();
     TemplateEngine hookEngine(TemplateEngine::makeThemeData(request.palette), std::move(hookOptions));
@@ -500,6 +493,9 @@ namespace noctalia::theme {
       // terminated by the shutdown grace, so cancelling it here is safe.
       process::RunOptions runOptions;
       runOptions.cancel = m_hookCancel;
+      if (id == "starship" && !request.undoStarshipConfig.empty()) {
+        runOptions.env.push_back({"STARSHIP_CONFIG", request.undoStarshipConfig});
+      }
       const process::RunResult result = process::runSync(rendered.text, runOptions);
       if (!result) {
         kLog.warn("undo hook for built-in template '{}' failed with exit code {}: {}", id, result.exitCode, result.err);

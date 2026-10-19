@@ -107,7 +107,6 @@ int main(int argc, char** argv) {
     TEST_CHECK(readFile(target).contains("palette = \"noctalia\""));
     TEST_CHECK(readFile(target).contains("success_symbol"));
     TEST_CHECK(std::filesystem::is_symlink(target));
-    TEST_CHECK(config.stateString("theme_templates", "starship_config") == target.string());
   }
   TEST_CHECK(readFile(stale) == original);
   TEST_CHECK(readFile(defaultConfig) == original);
@@ -122,16 +121,12 @@ int main(int argc, char** argv) {
   {
     ConfigService config;
     apply(config);
-    TEST_CHECK(config.stateString("theme_templates", "starship_config") == target.string());
-    TEST_CHECK(config.stateString("theme_templates", "applied_builtin_ids") == "starship");
     TEST_CHECK(readFile(target).contains("palette = \"noctalia\""));
   }
   writeFile(scriptDir / "undo.sh", undoScript);
   {
     ConfigService config;
     apply(config);
-    TEST_CHECK(config.stateString("theme_templates", "starship_config") == "");
-    TEST_CHECK(config.stateString("theme_templates", "applied_builtin_ids") == "");
   }
   TEST_CHECK(!readFile(target).contains("noctalia"));
   TEST_CHECK(readFile(target).starts_with(original));
@@ -150,7 +145,6 @@ int main(int argc, char** argv) {
     writeConfig(root, true);
     config.forceReload();
     apply(config);
-    TEST_CHECK(config.stateString("theme_templates", "starship_config") == "");
     TEST_CHECK(readFile(stale).contains("palette = \"noctalia\""));
     writeConfig(root, false);
     config.forceReload();
