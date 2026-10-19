@@ -46,6 +46,27 @@ List available built-in and configured template IDs:
 noctalia theme --list-templates
 ```
 
+### Starship config path
+
+If Starship uses a custom config file, set **Starship Config Path** in **Settings → Templates**, or configure it directly:
+
+```toml
+[theme.templates]
+builtin_ids = ["starship"]
+starship_config = "~/.config/starship/starship.toml"
+```
+
+Use the same path as Starship's `STARSHIP_CONFIG`. Noctalia uses this explicit path for applying and removing its palette,
+even when its daemon starts before your interactive shell. The file must be writable; this option does not make a
+Home Manager-managed file in the Nix store writable.
+
+When the setting is empty, Noctalia retains session discovery: its inherited `STARSHIP_CONFIG`, the systemd user
+environment, running processes, then the default `$XDG_CONFIG_HOME/starship.toml`. Shell startup exports may not be
+visible to the daemon or the process scan, so set an explicit path for reliable startup behavior.
+
+Disabling the template remembers its last explicit path even if you remove the setting at the same time. To move an
+existing integration to another file, disable the template first, then set the new path and enable it again.
+
 ## Community Templates
 
 Community templates are fetched from `https://api.noctalia.dev/templates` and cached locally:

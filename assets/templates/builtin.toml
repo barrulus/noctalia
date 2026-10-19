@@ -203,8 +203,8 @@ undo_hook = "bash '{{ config_dir }}/umbriel/undo.sh'"
 [templates.starship]
 input_path = "./starship/starship.toml"
 output_path = "$XDG_CACHE_HOME/noctalia/starship-palette.toml"
-post_hook = "bash '{{ config_dir }}/starship/apply.sh'"
-undo_hook = "bash '{{ config_dir }}/starship/undo.sh'"
+post_hook = "starship_config={{ config.theme.templates.starship_config | shell_quote }}; if [ -n \"$starship_config\" ]; then export STARSHIP_CONFIG=\"$starship_config\"; fi; bash '{{ config_dir }}/starship/apply.sh'"
+undo_hook = "starship_config={{ config.theme.templates.starship_config | shell_quote }}; if [ -n \"$starship_config\" ]; then export STARSHIP_CONFIG=\"$starship_config\"; fi; bash '{{ config_dir }}/starship/undo.sh'"
 
 [templates.wezterm]
 input_path = "./wezterm/wezterm.toml"

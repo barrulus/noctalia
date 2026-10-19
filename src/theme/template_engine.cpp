@@ -949,6 +949,8 @@ namespace noctalia::theme {
           auto [name, arg] = parseFilter(filter);
           if (name == "replace") {
             resolved = ScopeValue(applyReplace(scopeValueToString(resolved), arg));
+          } else if (name == "shell_quote") {
+            resolved = ScopeValue(StringUtils::shellQuote(scopeValueToString(resolved)));
           } else if (name == "lower_case") {
             resolved = ScopeValue(StringUtils::toLower(scopeValueToString(resolved)));
           } else if (name == "camel_case") {

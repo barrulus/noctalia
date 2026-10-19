@@ -4829,6 +4829,10 @@
           "description": "Show the small workspace tag on grouped taskbar capsules; turn off for icon-only groups",
           "label": "Workspace Capsule Label"
         },
+        "starship_config": {
+          "description": "Starship configuration file to theme. Leave empty to discover it from the session.",
+          "label": "Starship Config Path"
+        },
         "stat": {
           "description": "System statistic to display",
           "label": "Stat"

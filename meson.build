@@ -1286,6 +1286,7 @@ if build_tests
     'scrollbar_geometry',
     'secret_store',
     'security_primitives',
+    'starship_template',
     'state_store',
     'string_utils',
     'surface_blur_region',
@@ -1329,7 +1330,7 @@ if build_tests
       override_options: ['b_ndebug=false'],
     )
     test_args = []
-    if test_name == 'desktop_entry_localization'
+    if test_name == 'desktop_entry_localization' or test_name == 'starship_template'
       test_args = [meson.project_source_root() / 'assets']
     elif test_name == 'i18n_supported_languages'
       test_args = [meson.project_source_root() / 'assets' / 'translations']

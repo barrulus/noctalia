@@ -1244,6 +1244,7 @@ namespace noctalia::config::schema {
       static const Schema<ThemeConfig::TemplatesConfig> s = {
           field(&ThemeConfig::TemplatesConfig::enableBuiltinTemplates, "enable_builtin_templates"),
           field(&ThemeConfig::TemplatesConfig::builtinIds, "builtin_ids"),
+          pathStringField(&ThemeConfig::TemplatesConfig::starshipConfig, "starship_config"),
           field(&ThemeConfig::TemplatesConfig::enableCommunityTemplates, "enable_community_templates"),
           field(&ThemeConfig::TemplatesConfig::communityIds, "community_ids"),
           customColorsField(),

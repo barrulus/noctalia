@@ -155,6 +155,7 @@ namespace noctalia::theme {
     // state.toml owner/key holding the built-in template ids Noctalia has applied.
     constexpr std::string_view kStateOwner = "theme_templates";
     constexpr std::string_view kAppliedBuiltinIdsKey = "applied_builtin_ids";
+    constexpr std::string_view kStarshipConfigKey = "starship_config";
 
     std::set<std::string> enabledBuiltinIds(const ThemeConfig::TemplatesConfig& templates) {
       if (!templates.enableBuiltinTemplates) {
@@ -245,6 +246,7 @@ namespace noctalia::theme {
           }
         }
       } else {
+        request.undoStarshipConfig = m_config.stateString(kStateOwner, kStarshipConfigKey).value_or("");
         request.undoBuiltinIds = syncAppliedBuiltinIds(request.templates);
         request.generation = ++m_nextGeneration;
         m_lastAppliedRequest = request;
@@ -400,6 +402,9 @@ namespace noctalia::theme {
     }
 
     const std::set<std::string> enabled = enabledBuiltinIds(templates);
+    if (enabled.contains("starship")) {
+      (void)m_config.setStateString(kStateOwner, kStarshipConfigKey, templates.starshipConfig);
+    }
 
     // Everything applied or still owing an undo, minus what is enabled again now. Owed ids
     // survive a request that never ran (coalesced away, superseded) and a restart.
@@ -419,6 +424,9 @@ namespace noctalia::theme {
     for (const auto& id : ids) {
       m_owedUndoBuiltinIds.erase(id);
       m_appliedBuiltinIds.erase(id);
+      if (id == "starship" && !enabledBuiltinIds(m_config.config().theme.templates).contains("starship")) {
+        (void)m_config.setStateString(kStateOwner, kStarshipConfigKey, "");
+      }
     }
     persistAppliedBuiltinIds();
   }
@@ -455,6 +463,13 @@ namespace noctalia::theme {
     hookOptions.schemeType = request.schemeType;
     hookOptions.verbose = true;
     hookOptions.configTable = request.configTable;
+    if (std::ranges::contains(request.undoBuiltinIds, "starship")) {
+      // The serialized config always includes theme.templates. Undo targets the
+      // path used when Starship was enabled, even if its setting was removed.
+      auto undoConfig = std::make_shared<toml::table>(*request.configTable);
+      (*undoConfig)["theme"]["templates"].as_table()->insert_or_assign("starship_config", request.undoStarshipConfig);
+      hookOptions.configTable = std::move(undoConfig);
+    }
     hookOptions.configDir = configPath.parent_path().string();
     hookOptions.configFile = configPath.string();
     TemplateEngine hookEngine(TemplateEngine::makeThemeData(request.palette), std::move(hookOptions));

@@ -60,6 +60,7 @@ namespace noctalia::theme {
       // Built-in templates Noctalia has applied and that are no longer enabled: their
       // undo hooks run before this request's templates.
       std::vector<std::string> undoBuiltinIds;
+      std::string undoStarshipConfig;
       std::uint64_t generation = 0;
     };
 

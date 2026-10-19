@@ -1779,6 +1779,7 @@ struct ThemeConfig {
   struct TemplatesConfig {
     bool enableBuiltinTemplates = true;
     std::vector<std::string> builtinIds;
+    std::string starshipConfig;
     bool enableCommunityTemplates = true;
     std::vector<std::string> communityIds;
     std::vector<TemplateColorConfig> customColors;

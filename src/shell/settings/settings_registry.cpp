@@ -915,6 +915,24 @@ namespace settings {
       e.visibleWhen = builtInTemplatesOn;
       entries.push_back(std::move(e));
     }
+    {
+      auto entry = makeEntry(
+          SettingsSection::Templates, "built-in", tr("settings.widgets.settings.starship_config.label"),
+          tr("settings.widgets.settings.starship_config.description"), {"theme", "templates", "starship_config"},
+          TextSetting{
+              .value = cfg.theme.templates.starshipConfig,
+              .placeholder = "~/.config/starship.toml",
+              .browseMode = TextSettingBrowseMode::OpenFile,
+              .browseFileExtensions = {".toml"},
+          },
+          "starship prompt config path"
+      );
+      entry.visibleWhen = SettingVisibility{[](const Config& c) {
+        return c.theme.templates.enableBuiltinTemplates
+            && std::ranges::contains(c.theme.templates.builtinIds, "starship");
+      }};
+      entries.push_back(std::move(entry));
+    }
     entries.push_back(makeEntry(
         SettingsSection::Templates, "community", tr("settings.schema.templates.enable-community-templates.label"),
         tr("settings.schema.templates.enable-community-templates.description"),

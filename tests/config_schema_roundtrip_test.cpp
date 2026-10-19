@@ -590,6 +590,7 @@ location = "https://example.invalid/bad"
     c.theme.shellMode = ShellThemeMode::Auto;
     c.theme.templates.enableBuiltinTemplates = false;
     c.theme.templates.builtinIds = {"a", "b"};
+    c.theme.templates.starshipConfig = "/tmp/starship config.toml";
     c.theme.templates.customColors = {
         {"accent", "#112233", "#112233", "#332211", true}, {"bg", "#000000", "#000000", "#000000", false}
     };
