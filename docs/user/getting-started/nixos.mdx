@@ -308,76 +308,34 @@ When using the service, it is recommended to enable `launch_apps_as_systemd_serv
 
 ### Declarative Starship colors {#starship}
 
-Starship needs its palette in the same file as its prompt settings. The built-in Starship template edits that file,
-so it cannot update a Home Manager symlink into the read-only Nix store. Use a user template to combine Home Manager's
-config with Noctalia's palette in a separate writable file instead.
-
-Add this to your Home Manager configuration alongside the Noctalia module. Keep your existing
-`programs.starship.settings` and `programs.starship.presets`; the example reads the file Home Manager generates from
-both. Leave the built-in `starship` template disabled in Noctalia.
+Enable the Home Manager integration to apply Noctalia colors while keeping your Starship settings and presets
+declarative:
 
 ```nix
-{ config, lib, pkgs, ... }:
-let
-  starshipAssets = "${config.programs.noctalia.package}/share/noctalia/assets/templates/starship";
-  starshipBase = config.home.file.${config.programs.starship.configPath}.source;
-  starshipOutput = "${config.xdg.stateHome}/noctalia/starship.toml";
-  composeStarship = pkgs.writeShellApplication {
-    name = "noctalia-compose-starship";
-    runtimeInputs = with pkgs; [ coreutils gawk gnused gnugrep bash ];
-    text = ''
-      output=${lib.escapeShellArg starshipOutput}
-      mkdir -p "$(dirname "$output")"
-      temporary=$(mktemp "$output.XXXXXX")
-      trap 'rm -f "$temporary"' EXIT
-      cat ${lib.escapeShellArg starshipBase} > "$temporary"
-      export XDG_CACHE_HOME=${lib.escapeShellArg config.xdg.cacheHome}
-      if [[ -f "$XDG_CACHE_HOME/noctalia/starship-palette.toml" ]]; then
-        STARSHIP_CONFIG="$temporary" bash ${lib.escapeShellArg "${starshipAssets}/apply.sh"}
-      fi
-      if ! cmp -s "$temporary" "$output"; then
-        mv -f "$temporary" "$output"
-      fi
-    '';
-  };
-in
-{
-  programs.starship = {
-    enable = true;
-    settings.add_newline = false; # Keep your own prompt settings here.
-  };
-
-  programs.noctalia = {
-    enable = true;
-    settings.theme.templates.user.starship = {
-      input_path = "${starshipAssets}/starship.toml";
-      output_path = "${config.xdg.cacheHome}/noctalia/starship-palette.toml";
-      post_hook = lib.escapeShellArg (lib.getExe composeStarship);
-      hook_async = false;
-    };
-  };
-
-  # Override Home Manager's export without changing its immutable configPath.
-  home.sessionVariables.STARSHIP_CONFIG = lib.mkForce starshipOutput;
-  home.activation.noctaliaStarship = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    run ${lib.getExe composeStarship}
-  '';
-}
+programs.starship = {
+  enable = true;
+  settings.add_newline = false;
+};
+programs.noctalia = {
+  enable = true;
+  starship.enable = true;
+};
 ```
 
-Activation creates the writable file even before a palette is available, using the original prompt settings. Subsequent
-Home Manager switches rebuild it from the new settings and the last generated palette. Noctalia updates it when the
-palette changes. Each update replaces the complete file atomically; the Nix-managed source remains untouched. Reserve
-the palette name `noctalia` for this integration.
+The module combines Home Manager's generated Starship configuration with Noctalia's palette in
+`$XDG_STATE_HOME/noctalia/starship.toml` and sets `STARSHIP_CONFIG` to that writable file. The Nix store source stays
+unchanged. Activation initializes the file and refreshes it on Home Manager switches; Noctalia updates the colors when
+its palette changes. Updates replace the complete file atomically.
 
-Start a new login session after enabling this configuration so your shells receive the new `STARSHIP_CONFIG`. The
-composition hook supplies its own explicit path and does not depend on Noctalia inheriting shell exports or discovering
-another process's environment.
+This integration requires attribute-set `programs.noctalia.settings`; raw TOML strings and paths remain supported when
+it is disabled. It manages the `starship` user template, so leave the built-in Starship template disabled and do not
+define your own `theme.templates.user.starship`. The module also sets `theme.templates.starship_config` to its generated
+file. Reserve the palette name `noctalia` for generated colors.
 
-To disable the integration, remove the user template, activation entry, and `home.sessionVariables.STARSHIP_CONFIG`
-override, then switch Home Manager and start a new login session. Home Manager's original Starship config becomes active
-again. Existing shells keep using the last generated file until you update their `STARSHIP_CONFIG` or restart the
-session. The generated file is retained; there is no user-template undo hook.
+Start a new login session after enabling or disabling the integration so your shells receive the updated
+`STARSHIP_CONFIG`. To disable it, set `programs.noctalia.starship.enable = false` and switch Home Manager. The original
+Home Manager Starship config becomes active in the new session. The last generated file is retained for existing
+shells; Noctalia no longer updates it.
 
 ### Binary Cache {#binary-cache}
 
