@@ -410,12 +410,13 @@ void SoundPlayer::setEventEnabled(std::string_view event, bool enabled) {
 }
 
 void SoundPlayer::setVolume(float volume) {
+  const float clamped = std::clamp(volume, 0.0F, 1.0F);
   if (m_threadLoop == nullptr) {
-    m_volume = std::clamp(volume, 0.0F, 1.0F);
+    m_volume = clamped;
     return;
   }
   const ThreadLoopLock lock(m_threadLoop);
-  m_volume = std::clamp(volume, 0.0F, 1.0F);
+  m_volume = clamped;
 }
 
 void SoundPlayer::onProcess(void* userdata) {
