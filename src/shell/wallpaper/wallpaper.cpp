@@ -361,8 +361,15 @@ TextureHandle Wallpaper::currentTexture() const {
 }
 
 std::string Wallpaper::currentPath() const {
-  const WallpaperInstance* inst = currentInstance();
-  return inst != nullptr ? inst->currentPath : std::string{};
+  if (const WallpaperInstance* inst = currentInstance(); inst != nullptr) {
+    return inst->currentPath;
+  }
+  // No instance shows an image (e.g. every output is owned by an external source such
+  // as mpvpaper): report the wallpaper the palette is built from.
+  if (m_wallpaperEnabled && m_config != nullptr) {
+    return m_config->getPaletteWallpaperPath();
+  }
+  return {};
 }
 
 bool Wallpaper::ownsSurface(wl_surface* surface) const noexcept {

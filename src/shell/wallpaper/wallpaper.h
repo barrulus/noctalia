@@ -66,6 +66,8 @@ public:
 
   // Prefer a landscape image; otherwise use the first available image.
   [[nodiscard]] TextureHandle currentTexture() const;
+  // Path of currentTexture(); when no instance shows an image while wallpaper is enabled,
+  // falls back to the palette wallpaper path so consumers still show what drives colors.
   [[nodiscard]] std::string currentPath() const;
 
   // Emits whenever the displayed wallpaper (path/texture) changes, including
