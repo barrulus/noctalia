@@ -23,6 +23,7 @@
 #include "shell/surface/shadow.h"
 #include "shell/switcher/window_switcher_carousel_style.h"
 #include "shell/switcher/window_switcher_compact_style.h"
+#include "shell/switcher/window_switcher_icons_style.h"
 #include "shell/switcher/window_switcher_membership.h"
 #include "shell/switcher/window_switcher_tile.h"
 #include "system/app_identity.h"
@@ -73,6 +74,9 @@ namespace {
     };
     if (config.style == ShellConfig::WindowSwitcherStyle::Compact) {
       return computeWindowSwitcherCompactLayout(context);
+    }
+    if (config.style == ShellConfig::WindowSwitcherStyle::Icons) {
+      return computeWindowSwitcherIconsLayout(context);
     }
     return computeWindowSwitcherCarouselLayout(context);
   }
@@ -641,6 +645,7 @@ struct WindowSwitcher::Instance {
   InputArea* strip = nullptr;
   std::vector<WindowSwitcherTile*> tiles;
   Label* counterLabel = nullptr;
+  Label* captionLabel = nullptr;
   Box* countBackground = nullptr;
   Label* emptyLabel = nullptr;
   InputDispatcher inputDispatcher;
@@ -969,6 +974,9 @@ void WindowSwitcher::startThumbnailCaptures() {
 }
 
 void WindowSwitcher::enqueueMissingThumbnailCaptures() {
+  if (m_config != nullptr && m_config->config().shell.windowSwitcher.style == ShellConfig::WindowSwitcherStyle::Icons) {
+    return;
+  }
   if (!m_active || m_wayland == nullptr || m_thumbnailCapture == nullptr || !m_thumbnailCapture->available()) {
     return;
   }
@@ -1225,6 +1233,13 @@ void WindowSwitcher::syncSelection(bool animate) {
 
   const ShellConfig::WindowSwitcherConfig switcherConfig =
       m_config != nullptr ? m_config->config().shell.windowSwitcher : ShellConfig::WindowSwitcherConfig{};
+  if (m_instance->captionLabel != nullptr) {
+    const std::string title = m_windows.empty()
+        ? std::string{}
+        : (m_windows[m_selectedIndex].title.empty() ? m_windows[m_selectedIndex].appLabel
+                                                    : m_windows[m_selectedIndex].title);
+    m_instance->captionLabel->setText(title);
+  }
   if (m_instance->surface->width() > 0 && m_instance->surface->height() > 0) {
     m_instance->styleLayout = computeSwitcherLayout(
         static_cast<float>(m_instance->surface->width()), static_cast<float>(m_instance->surface->height()),
@@ -1798,6 +1813,18 @@ void WindowSwitcher::positionPanel(Instance& instance, float screenW, float scre
   }
   instance.strip->setPosition(layout.stripX, layout.stripY);
   instance.strip->setFrameSize(layout.stripWidth, layout.stripHeight);
+  if (instance.captionLabel != nullptr) {
+    instance.captionLabel->setMaxWidth(layout.stripWidth);
+    instance.captionLabel->measure(instance.surface->renderTarget().renderer());
+    const float captionHeight = Style::controlHeightSm * instance.uiLayoutScale;
+    instance.captionLabel->setPosition(
+        layout.stripX + (layout.stripWidth - instance.captionLabel->width()) * 0.5F,
+        layout.stripY
+            + layout.stripHeight
+            + Style::spaceSm * instance.uiLayoutScale
+            + (captionHeight - instance.captionLabel->height()) * 0.5F
+    );
+  }
   if (instance.countBackground != nullptr) {
     instance.countBackground->setPosition(layout.countX, layout.countY);
     instance.countBackground->setFrameSize(layout.countWidth, layout.countHeight);
@@ -1959,6 +1986,7 @@ void WindowSwitcher::buildScene(Instance& instance, std::uint32_t width, std::ui
   });
   instance.tiles.clear();
   instance.counterLabel = nullptr;
+  instance.captionLabel = nullptr;
   instance.countBackground = nullptr;
   const ShellConfig::WindowSwitcherConfig switcherConfig =
       m_config != nullptr ? m_config->config().shell.windowSwitcher : ShellConfig::WindowSwitcherConfig{};
@@ -1976,7 +2004,9 @@ void WindowSwitcher::buildScene(Instance& instance, std::uint32_t width, std::ui
       tile->setAppIconColorizeTint(iconTint);
       tile->setShadowStyle(selectedShadowStyle);
       tile->setShowCaption(switcherConfig.showCaption);
-      tile->setShowAppIcon(switcherConfig.showAppIcon);
+      const bool iconsOnly = switcherConfig.style == ShellConfig::WindowSwitcherStyle::Icons;
+      tile->setShowPreview(!iconsOnly);
+      tile->setShowAppIcon(iconsOnly || switcherConfig.showAppIcon);
       tile->setOnInvalidate([this] { requestSceneUpdate(); });
       tile->setOnActivate([this, windowIndex] {
         setSelectedIndex(windowIndex);
@@ -1988,6 +2018,20 @@ void WindowSwitcher::buildScene(Instance& instance, std::uint32_t width, std::ui
     }
   }
   panel->addChild(std::move(strip));
+
+  if (switcherConfig.style == ShellConfig::WindowSwitcherStyle::Icons && switcherConfig.showCaption) {
+    panel->addChild(
+        ui::label({
+            .out = &instance.captionLabel,
+            .fontSize = Style::fontSizeCaption * scale,
+            .color = colorSpecFromRole(ColorRole::OnSurface),
+            .maxLines = 1,
+            .textAlign = TextAlign::Center,
+            .ellipsize = TextEllipsize::End,
+            .participatesInLayout = false,
+        })
+    );
+  }
 
   if (switcherConfig.showCount) {
     auto countBackground = ui::box({
